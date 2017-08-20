@@ -23,9 +23,10 @@
     <ClInclude Include="include\evolve\utils\policies.h" />
     <ClInclude Include="include\evolve\utils\singleton.h" />
     <ClInclude Include="include\evolve\utils\singletonlazyinstance.h" />
-    <ClInclude Include="include\evolve\utils\singletonlazyInstancemanager.h" />
-    <ClInclude Include="include\evolve\utils\thread.h" />
+    <ClInclude Include="include\evolve\utils\singletonlazyinstancemanager.h" />
+    <ClInclude Include="include\evolve\utils\threadingmodel.h" />
     <ClInclude Include="include\evolve\utils\timer.h" />
+    <ClInclude Include="include\evolve\utils\waitqueue.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\evolve\utils\policies.cpp" />

@@ -31,7 +31,7 @@
 #ifndef EVOLVE_SINGLETON_LAZY_INSTANCE_H
 #define EVOLVE_SINGLETON_LAZY_INSTANCE_H
 
-#include <evolve/utils/thread.h>
+#include <evolve/utils/threadingmodel.h>
 #include <evolve/utils/singletonlazyinstancemanager.h>
 #include <evolve/utils/export.h>
 #include <iostream>

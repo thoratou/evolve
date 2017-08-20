@@ -32,7 +32,7 @@
 #define EVOLVE_SINGLETON_H
 
 #include <evolve/utils/policies.h>
-#include <evolve/utils/thread.h>
+#include <evolve/utils/threadingmodel.h>
 #include <evolve/utils/singletonlazyinstance.h>
 
 /**

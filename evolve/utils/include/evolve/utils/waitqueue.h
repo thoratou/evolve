@@ -22,62 +22,75 @@
 ******************************************************************/
 
 /**
- * \file evolve/log/LoggerReporter.cpp
- * \brief evolve/log log message output handling source file
- * \author
- *
- */
+* \file evolve/utils/waitqueue.h
+* \brief evolve/utils wait queue with multithreading support
+* \author
+*
+*/
 
-#include <evolve/log/loggerreporter.h>
-#include <iostream>
-#include <sstream>
+#ifndef EVOLVE_WAIT_QUEUE_H
+#define EVOLVE_WAIT_QUEUE_H
+
+#include <queue>
+#include <mutex>
+#include <condition_variable>
 
 /**
- * Namespace for all evolve classes
- */
+* Namespace for all evolve classes
+*/
 namespace evolve {
-    /**
-     * Namespace for all utility classes
-     */
-    namespace log {
+	/**
+	* Namespace for all utility classes
+	*/
+	namespace utils {
 
+		/**
+		* \brief Wait queue with multithreading support
+		*
+		* Use to push a item in one thread and process it in a seperate process
+		*/
+		template <class T>
+		class WaitQueue {
+		public:
+			WaitQueue()
+				:_queue(), _mutex(), _condition()
+			{}
 
-        LoggerReporter::LoggerReporter() {}
+			/**
+			* \brief Push the message content to the queue
+			*
+			* \param[in] iMessage The message to log
+			*/
+			void push(const T& iMessage) {
+				std::lock_guard<std::mutex> scopedLock(_mutex);
+				_queue.push(iMessage);
+				_condition.notify_one();
+			}
 
-        LoggerReporter::~LoggerReporter() {}
-
-		void LoggerReporter::formatLogMessage(const LogMessage& iLogMessage, std::string& oLog) const {
-			std::stringstream aSs;
-			aSs << "[" << Logger::_LogLevelStringMap[iLogMessage._level] << "] ";
-			aSs << iLogMessage._message;
-			oLog = aSs.str();
-		}
-
-
-        CoutLoggerReporter::CoutLoggerReporter()
-            :evolve::log::LoggerReporter() {}
-
-        CoutLoggerReporter::~CoutLoggerReporter() {}
-
-        void CoutLoggerReporter::log(const LogMessage& iLogMessage) {
-			std::string aLog;
-			formatLogMessage(iLogMessage, aLog);
-            std::cout << aLog << std::endl;
-        }
-
-        FileLoggerReporter::FileLoggerReporter(const char* iFile)
-                :LoggerReporter(), _fileStream() {
-			_fileStream.open(iFile, std::ofstream::out | std::ofstream::app);
-		}
-
-        FileLoggerReporter::~FileLoggerReporter() {
-			_fileStream.close();
-		}
-
-        void FileLoggerReporter::log(const LogMessage& iLogMessage) {
-			std::string aLog;
-			formatLogMessage(iLogMessage, aLog);
-            _fileStream << aLog << std::endl << std::flush;
-        }
-    }
+			/**
+			* \brief Pop the message content from the queue
+			* 
+			* please not the pop methods waits until there is a message in the queue
+			* This means to be used in a separate thread
+			* 
+			* \param[in] iLog the debug message
+			*/
+			void pop(T& oMessage) {
+				std::unique_lock<std::mutex> scopedLock(_mutex);
+				while (_queue.empty())
+				{
+					//release lock until notify_one()
+					_condition.wait(scopedLock);
+				}
+				oMessage = _queue.front();
+				_queue.pop();
+			}
+		private:
+			std::queue<T> _queue;
+			std::mutex _mutex;
+			std::condition_variable _condition;
+		};
+	}
 }
+
+#endif

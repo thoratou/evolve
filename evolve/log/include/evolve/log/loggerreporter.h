@@ -48,61 +48,33 @@ namespace evolve {
         /**
          * \brief Interface for all log reporters
          */
-        class EVOLVE_EXPORT LoggerReporter {
-        public:
-            /**
-             * \brief Default constructor
-             */
-            LoggerReporter();
+		class EVOLVE_EXPORT LoggerReporter {
+		public:
+			/**
+			 * \brief Default constructor
+			 */
+			LoggerReporter();
 
-            /**
-             * \brief Destructor
-             */
-            virtual ~LoggerReporter() = 0;
+			/**
+			 * \brief Destructor
+			 */
+			virtual ~LoggerReporter() = 0;
 
-            /**
-             * \brief Log a debug message
-             *
-             * \param[in] iLog the debug message
-             */
-            virtual void debug(const std::string& iLog) = 0;
-
-            /**
-             * \brief Log an info message
-             *
-             * \param[in] iLog the info message
-             */
-            virtual void info(const std::string& iLog) = 0;
-
-            /**
-             * \brief Log a warning message
-             *
-             * \param[in] iLog the warning message
-             */
-            virtual void warning(const std::string& iLog) = 0;
-
-            /**
-             * \brief Log an error message
-             *
-             * \param[in] iLog the error message
-             */
-            virtual void error(const std::string& iLog) = 0;
-
-            /**
-             * \brief Log a call message
-             *
-             * \param[in] iPos The call position (begin or end)
-             * \param[in] iType The call type
-             * \param[in] iClassName The name of the class
-             * \param[in] iFunctionName The function or method name
-             * \param[in] iAddress The address of the traced instance
-             */
-            virtual void call(CallPosition iPos,
-                      CallType iType,
-                      const char* iClassName,
-                      const std::string& iFunctionName,
-                      const std::string& iAddress) = 0;
-        };
+			/**
+			* \brief Log a debug message
+			*
+			* \param[in] iLogMessage the message to log
+			*/
+			virtual void log(const LogMessage& iLogMessage) = 0;
+		protected:
+			/**
+			* \brief Helper method to fo)=
+			*
+			* \param[in] iLogMessage the message to log
+			* \param[out] oLog the formatted log
+			*/
+			virtual void formatLogMessage(const LogMessage& iLogMessage, std::string& oLog) const;
+		};
 
         /**
          * \brief Standard output reporter
@@ -119,50 +91,14 @@ namespace evolve {
             /**
              * \brief Destructor
              */
-            ~CoutLoggerReporter();
+			virtual ~CoutLoggerReporter();
 
-            /**
-             * \brief Log a debug message in standard output stream
-             *
-             * \param[in] iLog the debug message
-             */
-            void debug(const std::string& iLog);
-
-            /**
-             * \brief Log an info message in standard output stream
-             *
-             * \param[in] iLog the info message
-             */
-            void info(const std::string& iLog);
-
-            /**
-             * \brief Log a warning message in standard output stream
-             *
-             * \param[in] iLog the warning message
-             */
-            void warning(const std::string& iLog);
-
-            /**
-             * \brief Log an error message in standard output stream
-             *
-             * \param[in] iLog the error message
-             */
-            void error(const std::string& iLog);
-
-            /**
-             * \brief Log a call message in standard output stream
-             *
-             * \param[in] iPos The call position (begin or end)
-             * \param[in] iType The call type
-             * \param[in] iClassName The name of the class
-             * \param[in] iFunctionName The function or method name
-             * \param[in] iAddress The address of the traced instance
-             */
-            void call(CallPosition iPos,
-                      CallType iType,
-                      const char* iClassName,
-                      const std::string& iFunctionName,
-                      const std::string& iAddress);
+			/**
+			* \brief Log a debug message
+			*
+			* \param[in] iLogMessage the message to log
+			*/
+			virtual void log(const LogMessage& iLogMessage);
         };
         
         /**
@@ -182,50 +118,15 @@ namespace evolve {
             /**
              * \brief Destructor
              */
-            ~FileLoggerReporter();
+			virtual ~FileLoggerReporter();
 
-            /**
-             * \brief Log a debug message in file output stream
-             *
-             * \param[in] iLog the debug message
-             */
-            void debug(const std::string& iLog);
+			/**
+			* \brief Log a debug message
+			*
+			* \param[in] iLogMessage the message to log
+			*/
+			virtual void log(const LogMessage& iLogMessage);
 
-            /**
-             * \brief Log an info message in file output stream
-             *
-             * \param[in] iLog the info message
-             */
-            void info(const std::string& iLog);
-
-            /**
-             * \brief Log a warning message in file output stream
-             *
-             * \param[in] iLog the warning message
-             */
-            void warning(const std::string& iLog);
-
-            /**
-             * \brief Log an error message in file output stream
-             *
-             * \param[in] iLog the error message
-             */
-            void error(const std::string& iLog);
-
-            /**
-             * \brief Log a call message in file output stream
-             *
-             * \param[in] iPos The call position (begin or end)
-             * \param[in] iType The call type
-             * \param[in] iClassName The name of the class
-             * \param[in] iFunctionName The function or method name
-             * \param[in] iAddress The address of the traced instance
-             */
-            void call(CallPosition iPos,
-                      CallType iType,
-                      const char* iClassName,
-                      const std::string& iFunctionName,
-                      const std::string& iAddress);
         private:
             std::ofstream _fileStream; ///< output file stream
         };

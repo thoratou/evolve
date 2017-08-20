@@ -33,7 +33,9 @@
 #include <evolve/log/loggerReporter.h>
 #include <iostream>
 
-SINGLETON_IMPL(UniqueSingleton,evolve::log::Logger)
+SINGLETON_IMPL(UniqueSingleton, evolve::log::Logger)
+
+std::vector<std::string> evolve::log::Logger::_LogLevelStringMap{ "DEBUG", "INFO", "WARNING", "ERROR" };
 
 /**
  * Namespace for all evolve classes
@@ -50,78 +52,44 @@ namespace evolve {
             _reporter = iReporter;
         }
 
-        void Logger::debug(const std::string& iLog) {
-            if(_reporter==NULL){
-                std::cerr << "Can't log : undefined LoggerReporter" << std::endl;
-                std::cerr << "To log : [DEBUG] " << iLog << std::endl;
-            }
-            else{
-                _reporter->debug(iLog);
-            }
-        }
-
-        void Logger::info(const std::string& iLog) {
-            if(_reporter==NULL){
-                std::cerr << "Can't log : undefined LoggerReporter" << std::endl;
-                std::cerr << "To log : [INFO] " << iLog << std::endl;
-            }
-            else{
-                _reporter->info(iLog);
-            }
-        }
-
-        void Logger::warning(const std::string& iLog) {
-            if(_reporter==NULL){
-                std::cerr << "Can't log : undefined LoggerReporter" << std::endl;
-                std::cerr << "To log : [WARNING] " << iLog << std::endl;
-            }
-            else{
-                _reporter->warning(iLog);
-            }
-        }
-
-        void Logger::error(const std::string& iLog) {
-            if(_reporter==NULL){
-                std::cerr << "Can't log : undefined LoggerReporter" << std::endl;
-                std::cerr << "To log : [ERROR] " << iLog << std::endl;
-            }
-            else{
-                _reporter->error(iLog);
-            }
-        }
-
-        void Logger::call(CallPosition iPos,
-                          CallType iType,
-                          const char* iClassName,
-                          const std::string& iFunctionName,
-                          const std::string& iAddress){
-            if(_reporter==NULL){
-                std::cerr << "Can't log : undefined LoggerReporter" << std::endl;
-                std::cerr << "To log : [CALL] ..." << std::endl;
-            }
-            else{
-                _reporter->call(iPos,iType,iClassName,iFunctionName,iAddress);
-            }
+        void Logger::log(const LogMessage& aMessage) {
+				_logQueue.push(aMessage);
         }
 
         Logger::Logger()
-            :_reporter(NULL) {}
+            :_reporter(NULL),
+			 _logQueue(),
+			 _logThread(&Logger::loopMessageLogs ,this),
+			 _closureCondition(false) {
+		}
 
         Logger::~Logger() {
+			_closureCondition = true;
+			
+			LogMessage aClosureMessage;
+			aClosureMessage._level = LEVEL_INFO;
+			aClosureMessage._message = "Log closure";
+			log(aClosureMessage);
+
+			//wait thread completion
+			_logThread.join();
+
             delete _reporter;
             _reporter = NULL;
         }
 
-        ScopeLog::ScopeLog(evolve::log::CallType iType,
-                           const char* iClassName,
-                           const std::string& iFunctionName,
-                           const std::string& iAddress)
-            :_type(iType),_className(iClassName), _functionName(iFunctionName), _address(iAddress){
-            EVOLVE_LOG_CALL(evolve::log::CALL_BEGIN,_type,_className,_functionName,_address);
-        }
-
-        ScopeLog::~ScopeLog(){
-            EVOLVE_LOG_CALL(evolve::log::CALL_END,_type,_className,_functionName,_address);
-        }
+		void Logger::loopMessageLogs() {
+			while (!_closureCondition) {
+				LogMessage aLogMessage;
+				_logQueue.pop(aLogMessage);
+				if (_reporter == NULL) {
+					std::cerr << "Can't log : undefined raporter" << std::endl;
+					std::cerr << "To log : " << aLogMessage._message << std::endl;
+				}
+				else {
+					this->_reporter->log(aLogMessage);
+				}
+			}
+		}
     }
 }

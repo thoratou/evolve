@@ -32,6 +32,7 @@
 #define EVOLVE_LOGGER_H
 
 #include <evolve/utils/singleton.h>
+#include <evolve/utils/waitqueue.h>
 #include <evolve/utils/export.h>
 #include <string>
 
@@ -44,26 +45,22 @@ namespace evolve {
      */
     namespace log {
 
-        /**
-         * \brief Call position (begin or end of scope)
-         */
-    	enum CallPosition{
-    		CALL_BEGIN,
-    		CALL_END
-    	};
-    	
-        /**
-         * \brief Call type (constructor, destructor; method, ...)
-         */
-        enum CallType{
-    		CALL_CONSTRUCTOR,
-    		CALL_DESTRUCTOR,
-    		CALL_METHOD,
-    		CALL_STATIC_METHOD,
-    		CALL_FUNCTION
-    	};
-    
+		/**
+		* \brief Call position (begin or end of scope)
+		*/
+		enum LogLevel {
+			LEVEL_DEBUG = 0,
+			LEVEL_INFO,
+			LEVEL_WARNING,
+			LEVEL_ERROR,
+		};
+
         class LoggerReporter;
+
+		struct LogMessage {
+			LogLevel _level;
+			std::string _message;
+		};
 
         /**
          * \brief Singleton for log message handling
@@ -72,7 +69,9 @@ namespace evolve {
          * EVOLVE_LOG_DEBUG, EVOLVE_LOG_INFO, EVOLVE_LOG_WARNING, EVOLVE_LOG_ERROR)
          */
         class EVOLVE_EXPORT Logger : public evolve::utils::UniqueSingleton<Logger> {
-        	SINGLETON_DECL(UniqueSingleton,Logger)
+			SINGLETON_DECL(UniqueSingleton, Logger)
+
+				friend std::thread;
         public:
             /**
              * \brief Attach a specific reporter
@@ -86,45 +85,11 @@ namespace evolve {
             /**
              * \brief Log a debug message
              *
-             * \param[in] iLog the debug message
+             * \param[in] iLogMessage the message to log
              */
-            void debug(const std::string& iLog);
+			void log(const LogMessage& iLogMessage);
 
-            /**
-             * \brief Log an info message
-             *
-             * \param[in] iLog the info message
-             */
-            void info(const std::string& iLog);
-
-            /**
-             * \brief Log a warning message
-             *
-             * \param[in] iLog the warning message
-             */
-            void warning(const std::string& iLog);
-
-            /**
-             * \brief Log an error message
-             *
-             * \param[in] iLog the error message
-             */
-            void error(const std::string& iLog);
-
-            /**
-             * \brief Log a call message
-             *
-             * \param[in] iPos The call position (begin or end)
-             * \param[in] iType The call type
-             * \param[in] iClassName The name of the class
-             * \param[in] iFunctionName The function or method name
-             * \param[in] iAddress The address of the traced instance
-             */
-            void call(CallPosition iPos,
-                      CallType iType,
-                      const char* iClassName,
-                      const std::string& iFunctionName,
-                      const std::string& iAddress);
+			static std::vector<std::string> _LogLevelStringMap;
         private:
             /**
              * \brief Default constructor
@@ -137,43 +102,12 @@ namespace evolve {
             ~Logger();
 
             LoggerReporter* _reporter; ///< reporter instance
+			evolve::utils::WaitQueue<LogMessage> _logQueue;
+			std::thread _logThread;
+			bool _closureCondition;
+
+			void loopMessageLogs();
         };
-
-        /**
-         * \brief Class to automatically handle log scope destruction
-         *
-         * With this class, you will need only EVOLVE_DECL_CONSTRUCTOR, ... to create a complete log scope
-         */
-        class EVOLVE_EXPORT ScopeLog{
-        public:
-            /**
-             * \brief Constructor
-             *
-             * Log begin scope call
-             *
-             * \param[in] iType Call type
-             * \param[in] iClassName Class name
-             * \param[in] iFunctionName Function or method name
-             * \param[in] iAddress Instance address to trace
-             */
-            ScopeLog(evolve::log::CallType iType,
-                     const char* iClassName,
-                     const std::string& iFunctionName,
-                     const std::string& iAddress);
-
-            /**
-             * \brief Destructor
-             *
-             * Log end scope call
-             */
-            ~ScopeLog();
-        private:
-            evolve::log::CallType _type; ///< Call type
-            const char* _className; ///< Current class name
-            std::string _functionName; ///< Function or method name
-            std::string _address; ///< Cureent instance address
-        };
-
     }
 }
 
@@ -184,35 +118,41 @@ namespace evolve {
 # endif
 
 # if defined(USE_EVOLVE_LOG_DEBUG)
-#  define EVOLVE_LOG_DEBUG(s)	do{std::stringstream _ss; _ss << s; evolve::log::Logger::Instance()->debug(_ss.str());} while(0)
+#  define EVOLVE_LOG(level, message) \
+	do{ \
+		evolve::log::LogMessage aLogMesssage; \
+		aLogMesssage._level = level; \
+		std::stringstream _ss; \
+		_ss << message; \
+		aLogMesssage._message = _ss.str(); \
+		evolve::log::Logger::Instance()->log(aLogMesssage); \
+	} while(0)
 # else
-#  define EVOLVE_LOG_DEBUG(s)
+#  define EVOLVE_LOG(level, message)
+# endif
+
+# if defined(USE_EVOLVE_LOG_DEBUG)
+#  define EVOLVE_LOG_DEBUG(message)	EVOLVE_LOG(evolve::log::LEVEL_DEBUG, message)
+# else
+#  define EVOLVE_LOG_DEBUG(message)
 # endif
 
 # if defined(USE_EVOLVE_LOG_DEBUG) || defined(USE_EVOLVE_LOG_INFO)
-#  define EVOLVE_LOG_INFO(s)	do {std::stringstream _ss; _ss << s; evolve::log::Logger::Instance()->info(_ss.str());} while(0)
+#  define EVOLVE_LOG_INFO(message)	EVOLVE_LOG(evolve::log::LEVEL_INFO, message)
 # else
-#  define EVOLVE_LOG_INFO(s)
+#  define EVOLVE_LOG_INFO(message)
 # endif
 
 # if defined(USE_EVOLVE_LOG_DEBUG) || defined(USE_EVOLVE_LOG_INFO) || defined(USE_EVOLVE_LOG_WARNING)
-#  define EVOLVE_LOG_WARNING(s)	do{std::stringstream _ss; _ss << s; evolve::log::Logger::Instance()->warning(_ss.str());} while(0)
+#  define EVOLVE_LOG_WARNING(message)	EVOLVE_LOG(evolve::log::LEVEL_WARNING, message)
 # else
-#  define EVOLVE_LOG_WARNING(s)
+#  define EVOLVE_LOG_WARNING(message)
 # endif
 
 # if defined(USE_EVOLVE_LOG_DEBUG) || defined(USE_EVOLVE_LOG_INFO) || defined(USE_EVOLVE_LOG_WARNING) || defined(USE_EVOLVE_LOG_ERROR)
-#  define EVOLVE_LOG_ERROR(s)	do{std::stringstream _ss; _ss << s; evolve::log::Logger::Instance()->error(_ss.str());} while(0)
+#  define EVOLVE_LOG_ERROR(message)	EVOLVE_LOG(evolve::log::LEVEL_ERROR, message)
 # else
-#  define EVOLVE_LOG_ERROR(s)
-# endif
-
-# ifdef USE_EVOLVE_LOG_CALL_TRACER
-#  define EVOLVE_LOG_CALL(p,t,c,f,a) evolve::log::Logger::Instance()->call(p,t,c,f,a);
-#  define EVOLVE_SCOPE_CALL(t,c,f,a) evolve::log::ScopeLog _scopeLog(t,c,f,a);
-#else
-#  define EVOLVE_LOG_CALL(p,t,c,f,a)
-#  define EVOLVE_SCOPE_CALL(t,c,f,a)
+#  define EVOLVE_LOG_ERROR(message)
 # endif
 
 #endif
