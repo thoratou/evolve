@@ -26,6 +26,7 @@
     <ClInclude Include="include\evolve\utils\singletonlazyinstance.h" />
     <ClInclude Include="include\evolve\utils\singletonlazyinstancemanager.h" />
     <ClInclude Include="include\evolve\utils\threadingmodel.h" />
+    <ClInclude Include="include\evolve\utils\threadutils.h" />
     <ClInclude Include="include\evolve\utils\timer.h" />
     <ClInclude Include="include\evolve\utils\waitqueue.h" />
   </ItemGroup>
@@ -34,6 +35,7 @@
     <ClCompile Include="src\evolve\utils\singleton.cpp" />
     <ClCompile Include="src\evolve\utils\singletonlazyinstance.cpp" />
     <ClCompile Include="src\evolve\utils\singletonlazyinstancemanager.cpp" />
+    <ClCompile Include="src\evolve\utils\threadutils.cpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>15.0</VCProjectVersion>

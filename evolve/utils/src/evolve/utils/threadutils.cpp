@@ -22,20 +22,14 @@
 ******************************************************************/
 
 /**
- * \file evolve/log/Logger.cpp
- * \brief evolve/log log handling source file
+ * \file evolve/utils/Policies.cpp
+ * \brief evolve/utils policy source file
  * \author
  *
  */
 
-
-#include <evolve/log/logger.h>
-#include <evolve/log/loggerReporter.h>
-#include <iostream>
-
-SINGLETON_IMPL(UniqueSingleton, evolve::log::Logger)
-
-std::vector<std::string> evolve::log::Logger::_LogLevelStringMap{ "DEBUG", "INFO", "WARNING", "ERROR", "OFF" };
+#include <evolve/utils/threadutils.h>
+#include <map>
 
 /**
  * Namespace for all evolve classes
@@ -44,54 +38,21 @@ namespace evolve {
     /**
      * Namespace for all utility classes
      */
-    namespace log {
+    namespace utils {
 
-        void Logger::attachReporter(LoggerReporter* iReporter) {
-            if(_reporter!=NULL)
-                delete _reporter;
-            _reporter = iReporter;
-        }
+		unsigned int GetThreadId(const std::thread::id& iId) {
+			static std::map<std::thread::id, unsigned int> aThreadIdMap;
+			static unsigned int aThreadIdCount = 0;
 
-        void Logger::log(const LogMessage& aMessage) {
-				_logQueue.push(aMessage);
-        }
-
-        Logger::Logger()
-            :_reporter(NULL),
-			 _logQueue(),
-			 _logThread(&Logger::loopMessageLogs ,this),
-			 _closureCondition(false) {
-		}
-
-        Logger::~Logger() {
-			_closureCondition = true;
-			
-			LogMessage aClosureMessage;
-			aClosureMessage._level = LEVEL_OFF;
-			log(aClosureMessage);
-
-			//wait thread completion
-			_logThread.join();
-
-            delete _reporter;
-            _reporter = NULL;
-        }
-
-		void Logger::loopMessageLogs() {
-			while (!_closureCondition) {
-				LogMessage aLogMessage;
-				_logQueue.pop(aLogMessage);
-				if (aLogMessage._level != LEVEL_OFF)
-				{
-					if (_reporter == NULL) {
-						std::cerr << "Can't log : undefined raporter" << std::endl;
-						std::cerr << "To log : " << aLogMessage._message << std::endl;
-					}
-					else {
-						this->_reporter->log(aLogMessage);
-					}
-				}
+			std::map<std::thread::id, unsigned int>::const_iterator aIt = aThreadIdMap.find(iId);
+			if (aIt != aThreadIdMap.end()) {
+				return aIt->second;
+			}
+			else {
+				aThreadIdMap[iId] = aThreadIdCount;
+				return aThreadIdCount++;
 			}
 		}
-    }
+
+	}
 }

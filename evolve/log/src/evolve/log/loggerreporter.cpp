@@ -29,6 +29,7 @@
  */
 
 #include <evolve/log/loggerreporter.h>
+#include <evolve/utils/threadutils.h>
 #include <iostream>
 #include <sstream>
 
@@ -51,24 +52,38 @@ namespace evolve {
 		void LoggerReporter::formatLogMessage(const LogMessage& iLogMessage, std::string& oLog) {
 			std::stringstream aSs;
 
-			aSs << "[" << _clock.getFormattedDateAndTime() << " | ";
+			aSs << "[" << _clock.getFormattedDateAndTime() << " | Thread: ";
 
+			//thread
+			aSs.setf(std::ios::left);
+			aSs.fill(' ');
+			aSs.width(3);
+			aSs << evolve::utils::GetThreadId(iLogMessage._threadId) << " (";
+			aSs.setf(std::ios::right);
+			aSs.fill('0');
+			aSs.width(16);
+			aSs << iLogMessage._threadId << ") | ";
+
+			//file and line
 			aSs.setf(std::ios::left);
 			aSs.fill(' ');
 			aSs.width(15);
 			aSs << iLogMessage._file << "#" << iLogMessage._line << " > ";
 				
 			
+			//function
 			aSs.setf(std::ios::right);
 			aSs.fill(' ');
 			aSs.width(40);
 			aSs << iLogMessage._func << " | ";
 
+			//log level
 			aSs.setf(std::ios::right);
 			aSs.fill(' ');
 			aSs.width(8);
 			aSs << Logger::_LogLevelStringMap[iLogMessage._level] << "] ";
 
+			//log message
 			aSs << iLogMessage._message;
 			oLog = aSs.str();
 		}
