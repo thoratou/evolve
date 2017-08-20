@@ -42,13 +42,33 @@ namespace evolve {
     namespace log {
 
 
-        LoggerReporter::LoggerReporter() {}
+        LoggerReporter::LoggerReporter()
+			:_clock()
+		{}
 
         LoggerReporter::~LoggerReporter() {}
 
-		void LoggerReporter::formatLogMessage(const LogMessage& iLogMessage, std::string& oLog) const {
+		void LoggerReporter::formatLogMessage(const LogMessage& iLogMessage, std::string& oLog) {
 			std::stringstream aSs;
-			aSs << "[" << Logger::_LogLevelStringMap[iLogMessage._level] << "] ";
+
+			aSs << "[" << _clock.getFormattedDateAndTime() << " " << " | ";
+
+			aSs.setf(std::ios::left);
+			aSs.fill(' ');
+			aSs.width(15);
+			aSs << iLogMessage._file << "#" << iLogMessage._line << " > ";
+				
+			
+			aSs.setf(std::ios::right);
+			aSs.fill(' ');
+			aSs.width(40);
+			aSs << iLogMessage._func << " | ";
+
+			aSs.setf(std::ios::right);
+			aSs.fill(' ');
+			aSs.width(8);
+			aSs << Logger::_LogLevelStringMap[iLogMessage._level] << "] ";
+
 			aSs << iLogMessage._message;
 			oLog = aSs.str();
 		}

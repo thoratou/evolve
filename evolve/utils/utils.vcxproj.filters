@@ -39,6 +39,9 @@
     <ClInclude Include="include\evolve\utils\threadingmodel.h">
       <Filter>Fichiers d%27en-tête</Filter>
     </ClInclude>
+    <ClInclude Include="include\evolve\utils\clock.h">
+      <Filter>Fichiers d%27en-tête</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\evolve\utils\policies.cpp">

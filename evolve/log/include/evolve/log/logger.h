@@ -60,6 +60,11 @@ namespace evolve {
 		struct LogMessage {
 			LogLevel _level;
 			std::string _message;
+			const char* _date;
+			const char* _time;
+			const char* _file;
+			unsigned int _line;
+			const char* _func;
 		};
 
         /**
@@ -117,18 +122,25 @@ namespace evolve {
 #  define EVOLVE_ATTACH_LOGGER_REPORTER(r)
 # endif
 
-# if defined(USE_EVOLVE_LOG_DEBUG)
-#  define EVOLVE_LOG(level, message) \
+# if defined(USE_EVOLVE_LOG_DEBUG) || defined(USE_EVOLVE_LOG_INFO) || defined(USE_EVOLVE_LOG_WARNING) || defined(USE_EVOLVE_LOG_ERROR)
+#  define EVOLVE_LOG(level, message) EVOLVE_LOG_(level, message, __DATE__, __TIME__, __FILE__, __LINE__, __FUNCTION__)
+#  define EVOLVE_LOG_(level, message, date, time, file, line, func) \
 	do{ \
 		evolve::log::LogMessage aLogMesssage; \
 		aLogMesssage._level = level; \
 		std::stringstream _ss; \
 		_ss << message; \
 		aLogMesssage._message = _ss.str(); \
+		aLogMesssage._date = date; \
+		aLogMesssage._time = time; \
+		aLogMesssage._file = file; \
+		aLogMesssage._line = line; \
+		aLogMesssage._func = func; \
 		evolve::log::Logger::Instance()->log(aLogMesssage); \
 	} while(0)
 # else
 #  define EVOLVE_LOG(level, message)
+#  define EVOLVE_LOG_(level, message)
 # endif
 
 # if defined(USE_EVOLVE_LOG_DEBUG)

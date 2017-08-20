@@ -32,6 +32,7 @@
 #define EVOLVE_LOGGER_REPORTER_H
 
 #include <evolve/log/logger.h>
+#include <evolve/utils/clock.h>
 #include <evolve/utils/export.h>
 #include <string>
 #include <fstream>
@@ -73,7 +74,9 @@ namespace evolve {
 			* \param[in] iLogMessage the message to log
 			* \param[out] oLog the formatted log
 			*/
-			virtual void formatLogMessage(const LogMessage& iLogMessage, std::string& oLog) const;
+			virtual void formatLogMessage(const LogMessage& iLogMessage, std::string& oLog);
+
+			evolve::utils::Clock _clock;
 		};
 
         /**
