@@ -51,7 +51,7 @@ namespace evolve {
 		void LoggerReporter::formatLogMessage(const LogMessage& iLogMessage, std::string& oLog) {
 			std::stringstream aSs;
 
-			aSs << "[" << _clock.getFormattedDateAndTime() << " " << " | ";
+			aSs << "[" << _clock.getFormattedDateAndTime() << " | ";
 
 			aSs.setf(std::ios::left);
 			aSs.fill(' ');
