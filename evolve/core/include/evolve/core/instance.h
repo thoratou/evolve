@@ -22,58 +22,56 @@
 ******************************************************************/
 
 /**
- * \file evolve/utils/SingletonLazyInstance.h
- * \brief evolve/utils singleton lazy instance handler header file
+ * \file evolve/core/Instance.h
+ * \brief evolve/core General Instance for Vulkan API handling
  * \author
  *
  */
 
-#ifndef EVOLVE_SINGLETON_LAZY_INSTANCE_MGR_H
-#define EVOLVE_SINGLETON_LAZY_INSTANCE_MGR_H
+#ifndef EVOLVE_INSTANCE_H
+#define EVOLVE_INSTANCE_H
 
-#include <evolve/utils/export.h>
-#include <stack>
+#include <evolve/core/export.h>
+#include <evolve/core/validationlayers.h>
+#include <vulkan/vulkan.h>
+#include <string>
+#include <vector>
+#include <memory>
 
 /**
  * Namespace for all evolve classes
  */
 namespace evolve {
-    /**
-     * Namespace for all utility classes
-     */
-    namespace utils {
-        class SingletonLazyInstanceInterface;
-		
-        /**
-         * \brief Singleton lazy instance manager.
-         *
-         * It handles all singleton instance for UniqueSingleton model.
-         * The current model only allow lazy instance destruction in the reverse order of the instanciation.
-         * It ensure for example the utilsger instance will be destroy at the last end if it is instanciated first.
-         */
-        class EVOLVE_UTILS_EXPORT SingletonLazyInstanceManager{
-			public:
-                /**
-                 * \brief Register a lazy instance
-                 *
-                 * \param[in,out] ioBase The lazy instance interface to register
-                 */
-				static void registerLazy(SingletonLazyInstanceInterface* ioBase);
-			private:
-                /**
-                 * \brief Default constructor
-                 */
-				SingletonLazyInstanceManager();
+	/**
+	 * Namespace for graphics and computation 
+	 */
+	namespace core {
 
-                /**
-                 * \brief Destructor
-                 */
-				~SingletonLazyInstanceManager();
+		/**
+		 * \brief General Instance for Vulkan API handling
+		 */
+        class EVOLVE_CORE_EXPORT Instance {
+        public:
+			Instance(const std::string& iApplicationName,
+					 const std::shared_ptr<evolve::core::ValidationLayers>& ioValidationLayers);
+			~Instance();
 
-                static SingletonLazyInstanceManager _Instance; ///< global instance for SingletonLazyInstanceManager
-                std::stack<SingletonLazyInstanceInterface*> _stack; ///< lazy instance stack
+			const VkInstance& get() const;
+
+			const std::vector<const char*>& getExtensions() const;
+			std::vector<const char*>& accessExtensions();
+
+			const evolve::core::ValidationLayers& getValidationLayers() const;
+		private:
+			void retrieveRequiredExtensions();
+			
+			VkInstance _instance;
+			std::string _applicationName;
+			std::vector<const char*> _extensions;
+
+			std::shared_ptr<evolve::core::ValidationLayers> _validationLayers;
 		};
-	}
+    }
 }
 
 #endif

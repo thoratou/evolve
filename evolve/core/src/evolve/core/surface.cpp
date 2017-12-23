@@ -21,16 +21,44 @@
 * under the License.                                             *
 ******************************************************************/
 
-#ifndef EVOLVE_THREADUTILS_H
-#define EVOLVE_THREADUTILS_H
+/**
+* \file evolve/core/surface.h
+* \brief evolve/core Window Surface
+* \author
+*
+*/
 
-#include <evolve/utils/export.h>
-#include <thread>
+#include <evolve/core/surface.h>
+#include <evolve/core/window.h>
+#include <evolve/log/log.h>
 
+#define GLFW_INCLUDE_VULKAN
+#include <GLFW/glfw3.h>
+
+#include <functional>
+
+/**
+ * Namespace for all evolve classes
+ */
 namespace evolve {
-    namespace utils {
-		unsigned int EVOLVE_UTILS_EXPORT GetThreadId(const std::thread::id& iId);
-    }
-}
+	/**
+	* Namespace for graphics and computation
+	*/
+	namespace core {
+		Surface::Surface(const std::shared_ptr<evolve::core::Instance>& iInstancePtr,
+						 const evolve::core::Window& iWindow)
+			:_instancePtr(iInstancePtr) {
+			if (glfwCreateWindowSurface(_instancePtr->get(), iWindow.get(), nullptr, &_surface) != VK_SUCCESS) {
+				EVOLVE_CRITICAL_EXCEPTION("failed to create window surface");
+			}
+		}
+		Surface::~Surface() {
+			vkDestroySurfaceKHR(_instancePtr->get(), _surface, nullptr);
+		}
 
-#endif
+		VkSurfaceKHR Surface::get() const {
+			return _surface;
+		}
+
+	}
+}

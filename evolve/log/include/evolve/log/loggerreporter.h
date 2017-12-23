@@ -33,7 +33,7 @@
 
 #include <evolve/log/logger.h>
 #include <evolve/utils/clock.h>
-#include <evolve/utils/export.h>
+#include <evolve/log/export.h>
 #include <string>
 #include <fstream>
 
@@ -49,7 +49,7 @@ namespace evolve {
         /**
          * \brief Interface for all log reporters
          */
-		class EVOLVE_EXPORT LoggerReporter {
+		class EVOLVE_LOG_EXPORT LoggerReporter {
 		public:
 			/**
 			 * \brief Default constructor
@@ -84,7 +84,7 @@ namespace evolve {
          *
          * Writes the log messages into the console
          */
-        class EVOLVE_EXPORT CoutLoggerReporter : public LoggerReporter {
+        class EVOLVE_LOG_EXPORT CoutLoggerReporter : public LoggerReporter {
         public:
             /**
              * \brief Default constructor
@@ -109,7 +109,7 @@ namespace evolve {
          *
          * Writes the log messages into a given file
          */
-        class EVOLVE_EXPORT FileLoggerReporter : public LoggerReporter {
+        class EVOLVE_LOG_EXPORT FileLoggerReporter : public LoggerReporter {
         public:
             /**
              * \brief Constructor with output file path

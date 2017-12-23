@@ -21,16 +21,45 @@
 * under the License.                                             *
 ******************************************************************/
 
-#ifndef EVOLVE_THREADUTILS_H
-#define EVOLVE_THREADUTILS_H
+/**
+* \file evolve/core/semaphore.cpp
+* \brief evolve/core Semaphore Handling
+* \author
+*
+*/
 
-#include <evolve/utils/export.h>
-#include <thread>
+#include <evolve/core/semaphore.h>
+#include <evolve/log/log.h>
 
+/**
+ * Namespace for all evolve classes
+ */
 namespace evolve {
-    namespace utils {
-		unsigned int EVOLVE_UTILS_EXPORT GetThreadId(const std::thread::id& iId);
-    }
-}
+	/**
+	* Namespace for graphics and computation
+	*/
+	namespace core {
+		Semaphore::Semaphore(const std::shared_ptr<evolve::core::Instance>& iInstancePtr,
+			const std::shared_ptr<evolve::core::GPUDevices>& iDevices)
+			:_instancePtr(iInstancePtr),
+			_devices(iDevices),
+			_semaphore(VK_NULL_HANDLE){
 
-#endif
+			VkSemaphoreCreateInfo semaphoreInfo = {};
+			semaphoreInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
+
+			if (vkCreateSemaphore(_devices->getLogicalDevice(), &semaphoreInfo, nullptr, &_semaphore) != VK_SUCCESS) {
+				EVOLVE_CRITICAL_EXCEPTION("failed to create semaphore");
+			}
+		}
+
+		Semaphore::~Semaphore() {
+
+			vkDestroySemaphore(_devices->getLogicalDevice(), _semaphore, nullptr);
+		}
+
+		VkSemaphore Semaphore::getSemaphore() const {
+			return _semaphore;
+		}
+	}
+}

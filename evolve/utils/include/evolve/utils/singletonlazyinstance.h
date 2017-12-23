@@ -52,7 +52,7 @@ namespace evolve {
          *
          *  The goal of this class is to have a common interface all instances handled by SingletonLazyInstanceManager
          */
-		class EVOLVE_EXPORT SingletonLazyInstanceInterface {
+		class EVOLVE_UTILS_EXPORT SingletonLazyInstanceInterface {
 		public:
             /**
              * \brief Default constructor

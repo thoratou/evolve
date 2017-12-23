@@ -35,7 +35,7 @@
 
 SINGLETON_IMPL(UniqueSingleton, evolve::log::Logger)
 
-std::vector<std::string> evolve::log::Logger::_LogLevelStringMap{ "DEBUG", "INFO", "WARNING", "ERROR", "OFF" };
+std::vector<std::string> evolve::log::Logger::_LogLevelStringMap{ "DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL", "OFF" };
 
 /**
  * Namespace for all evolve classes

@@ -22,58 +22,49 @@
 ******************************************************************/
 
 /**
- * \file evolve/utils/SingletonLazyInstance.h
- * \brief evolve/utils singleton lazy instance handler header file
+ * \file evolve/core/surface.h
+ * \brief evolve/core Window Surface
  * \author
  *
  */
 
-#ifndef EVOLVE_SINGLETON_LAZY_INSTANCE_MGR_H
-#define EVOLVE_SINGLETON_LAZY_INSTANCE_MGR_H
+#ifndef EVOLVE_SURFACE_H
+#define EVOLVE_SURFACE_H
 
-#include <evolve/utils/export.h>
-#include <stack>
+#include <evolve/core/export.h>
+#include <evolve/core/instance.h>
+
+#include <vulkan/vulkan.h>
+
+#include <string>
+#include <vector>
+#include <memory>
 
 /**
  * Namespace for all evolve classes
  */
 namespace evolve {
-    /**
-     * Namespace for all utility classes
-     */
-    namespace utils {
-        class SingletonLazyInstanceInterface;
-		
-        /**
-         * \brief Singleton lazy instance manager.
-         *
-         * It handles all singleton instance for UniqueSingleton model.
-         * The current model only allow lazy instance destruction in the reverse order of the instanciation.
-         * It ensure for example the utilsger instance will be destroy at the last end if it is instanciated first.
-         */
-        class EVOLVE_UTILS_EXPORT SingletonLazyInstanceManager{
-			public:
-                /**
-                 * \brief Register a lazy instance
-                 *
-                 * \param[in,out] ioBase The lazy instance interface to register
-                 */
-				static void registerLazy(SingletonLazyInstanceInterface* ioBase);
-			private:
-                /**
-                 * \brief Default constructor
-                 */
-				SingletonLazyInstanceManager();
+	/**
+	 * Namespace for graphics and computation 
+	 */
+	namespace core {
+		class Window;
+		/**
+		 * \brief General Instance for Vulkan API handling
+		 */
+        class EVOLVE_CORE_EXPORT Surface {
+        public:
+			Surface(const std::shared_ptr<evolve::core::Instance>& iInstancePtr,
+					const evolve::core::Window& iWindow);
+			~Surface();
 
-                /**
-                 * \brief Destructor
-                 */
-				~SingletonLazyInstanceManager();
+			VkSurfaceKHR get() const;
 
-                static SingletonLazyInstanceManager _Instance; ///< global instance for SingletonLazyInstanceManager
-                std::stack<SingletonLazyInstanceInterface*> _stack; ///< lazy instance stack
+		private:
+			VkSurfaceKHR _surface;
+			std::shared_ptr<evolve::core::Instance> _instancePtr;
 		};
-	}
+    }
 }
 
 #endif

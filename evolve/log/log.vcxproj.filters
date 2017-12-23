@@ -24,6 +24,9 @@
     <ClInclude Include="include\evolve\log\log.h">
       <Filter>Fichiers d%27en-tête</Filter>
     </ClInclude>
+    <ClInclude Include="include\evolve\log\export.h">
+      <Filter>Fichiers d%27en-tête</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\evolve\log\logger.cpp">

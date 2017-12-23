@@ -33,8 +33,9 @@
 
 #include <evolve/utils/singleton.h>
 #include <evolve/utils/waitqueue.h>
-#include <evolve/utils/export.h>
+#include <evolve/log/export.h>
 #include <string>
+#include <stdexcept>
 
 /**
  * Namespace for all evolve classes
@@ -53,6 +54,7 @@ namespace evolve {
 			LEVEL_INFO,
 			LEVEL_WARNING,
 			LEVEL_ERROR,
+			LEVEL_CRITICAL,
 			LEVEL_OFF,
 		};
 
@@ -73,7 +75,7 @@ namespace evolve {
          * Must be used with log macros (EVOLVE_ATTACH_LOGGER_REPORTER,
          * EVOLVE_LOG_DEBUG, EVOLVE_LOG_INFO, EVOLVE_LOG_WARNING, EVOLVE_LOG_ERROR)
          */
-        class EVOLVE_EXPORT Logger : public evolve::utils::UniqueSingleton<Logger> {
+        class EVOLVE_LOG_EXPORT Logger : public evolve::utils::UniqueSingleton<Logger> {
 			SINGLETON_DECL(UniqueSingleton, Logger)
 
 				friend std::thread;
@@ -116,15 +118,10 @@ namespace evolve {
     }
 }
 
-# if defined(USE_EVOLVE_LOG_DEBUG) || defined(USE_EVOLVE_LOG_INFO) || defined(USE_EVOLVE_LOG_WARNING) || defined(USE_EVOLVE_LOG_ERROR)
-#  define EVOLVE_ATTACH_LOGGER_REPORTER(r) evolve::log::Logger::Instance()->attachReporter((r));
-# else
-#  define EVOLVE_ATTACH_LOGGER_REPORTER(r)
-# endif
+#define EVOLVE_ATTACH_LOGGER_REPORTER(r) evolve::log::Logger::Instance()->attachReporter((r));
 
-# if defined(USE_EVOLVE_LOG_DEBUG) || defined(USE_EVOLVE_LOG_INFO) || defined(USE_EVOLVE_LOG_WARNING) || defined(USE_EVOLVE_LOG_ERROR)
-#  define EVOLVE_LOG(level, message) EVOLVE_LOG_(level, message, __FILE__, __LINE__, __FUNCTION__)
-#  define EVOLVE_LOG_(level, message, file, line, func) \
+#define EVOLVE_LOG(level, message) EVOLVE_LOG_(level, message, __FILE__, __LINE__, __FUNCTION__)
+#define EVOLVE_LOG_(level, message, file, line, func) \
 	do{ \
 		evolve::log::LogMessage aLogMesssage; \
 		aLogMesssage._level = level; \
@@ -137,33 +134,87 @@ namespace evolve {
 		aLogMesssage._threadId = std::this_thread::get_id(); \
 		evolve::log::Logger::Instance()->log(aLogMesssage); \
 	} while(0)
-# else
-#  define EVOLVE_LOG(level, message)
-#  define EVOLVE_LOG_(level, message)
-# endif
+
+#define EVOLVE_LOG_IF(level, condition, message) EVOLVE_LOG_(level, condition, message, __FILE__, __LINE__, __FUNCTION__)
+#define EVOLVE_LOG_IF_(level, condition, message, file, line, func) \
+	do{ \
+		if(condition) { \
+			evolve::log::LogMessage aLogMesssage; \
+			aLogMesssage._level = level; \
+			std::stringstream _ss; \
+			_ss << message; \
+			aLogMesssage._message = _ss.str(); \
+			aLogMesssage._file = file; \
+			aLogMesssage._line = line; \
+			aLogMesssage._func = func; \
+			aLogMesssage._threadId = std::this_thread::get_id(); \
+			evolve::log::Logger::Instance()->log(aLogMesssage); \
+		} \
+	} while(0)
 
 # if defined(USE_EVOLVE_LOG_DEBUG)
 #  define EVOLVE_LOG_DEBUG(message)	EVOLVE_LOG(evolve::log::LEVEL_DEBUG, message)
+#  define EVOLVE_LOG_DEBUG_IF(condition, message)	EVOLVE_LOG_IF(evolve::log::LEVEL_DEBUG, condition, message)
 # else
 #  define EVOLVE_LOG_DEBUG(message)
+#  define EVOLVE_LOG_DEBUG_IF(condition, message)
 # endif
 
 # if defined(USE_EVOLVE_LOG_DEBUG) || defined(USE_EVOLVE_LOG_INFO)
 #  define EVOLVE_LOG_INFO(message)	EVOLVE_LOG(evolve::log::LEVEL_INFO, message)
+#  define EVOLVE_LOG_INFO_IF(condition, message)	EVOLVE_LOG_IF(evolve::log::LEVEL_INFO, condition, message)
 # else
 #  define EVOLVE_LOG_INFO(message)
+#  define EVOLVE_LOG_INFO_IF(condition, message)
 # endif
 
 # if defined(USE_EVOLVE_LOG_DEBUG) || defined(USE_EVOLVE_LOG_INFO) || defined(USE_EVOLVE_LOG_WARNING)
 #  define EVOLVE_LOG_WARNING(message)	EVOLVE_LOG(evolve::log::LEVEL_WARNING, message)
+#  define EVOLVE_LOG_WARNING_IF(condition, message)	EVOLVE_LOG_IF(evolve::log::LEVEL_WARNING, condition, message)
 # else
 #  define EVOLVE_LOG_WARNING(message)
+#  define EVOLVE_LOG_WARNING_IF(condition, message)
 # endif
 
-# if defined(USE_EVOLVE_LOG_DEBUG) || defined(USE_EVOLVE_LOG_INFO) || defined(USE_EVOLVE_LOG_WARNING) || defined(USE_EVOLVE_LOG_ERROR)
-#  define EVOLVE_LOG_ERROR(message)	EVOLVE_LOG(evolve::log::LEVEL_ERROR, message)
-# else
-#  define EVOLVE_LOG_ERROR(message)
-# endif
+#define EVOLVE_LOG_ERROR(message)	EVOLVE_LOG(evolve::log::LEVEL_ERROR, message)
+#define EVOLVE_LOG_ERROR_IF(condition, message)	EVOLVE_LOG_IF(evolve::log::LEVEL_ERROR, condition, message)
+
+#define EVOLVE_LOG_CRITICAL(message)	EVOLVE_LOG(evolve::log::LEVEL_CRITICAL, message)
+#define EVOLVE_LOG_CRITICAL_IF(condition, message)	EVOLVE_LOG_IF(evolve::log::LEVEL_CRITICAL, condition, message)
+
+#define EVOLVE_CRITICAL_EXCEPTION(message)	EVOLVE_CRITICAL_EXCEPTION_(evolve::log::LEVEL_CRITICAL, message, __FILE__, __LINE__, __FUNCTION__)
+#define EVOLVE_CRITICAL_EXCEPTION_(level, message, file, line, func) \
+	do { \
+		evolve::log::LogMessage aLogMesssage; \
+		aLogMesssage._level = level; \
+		std::stringstream _ss; \
+		_ss << message; \
+		aLogMesssage._message = _ss.str(); \
+		aLogMesssage._file = file; \
+		aLogMesssage._line = line; \
+		aLogMesssage._func = func; \
+		aLogMesssage._threadId = std::this_thread::get_id(); \
+		evolve::log::Logger::Instance()->log(aLogMesssage); \
+		throw std::runtime_error(message); \
+	} while (0)
+
+
+#define EVOLVE_CRITICAL_EXCEPTION_IF(condition, message)	EVOLVE_CRITICAL_EXCEPTION_IF_(evolve::log::LEVEL_CRITICAL, condition, message, __FILE__, __LINE__, __FUNCTION__)
+#define EVOLVE_CRITICAL_EXCEPTION_IF_(level, condition, message, file, line, func) \
+	do { \
+		if (condition) { \
+			evolve::log::LogMessage aLogMesssage; \
+			aLogMesssage._level = level; \
+			std::stringstream _ss; \
+			_ss << message; \
+			aLogMesssage._message = _ss.str(); \
+			aLogMesssage._file = file; \
+			aLogMesssage._line = line; \
+			aLogMesssage._func = func; \
+			aLogMesssage._threadId = std::this_thread::get_id(); \
+			evolve::log::Logger::Instance()->log(aLogMesssage); \
+			throw std::runtime_error(message); \
+		} \
+	} while (0)
 
 #endif

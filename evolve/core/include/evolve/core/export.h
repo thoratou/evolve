@@ -29,8 +29,8 @@
  * Pre-processor definitions for evolve/utils component
  */
 
-#ifndef EVOLVE_UTILS_EXPORT_H
-#define EVOLVE_UTILS_EXPORT_H
+#ifndef EVOLVE_CORE_EXPORT_H
+#define EVOLVE_CORE_EXPORT_H
 
 #if defined (_MSC_VER)
 # pragma warning(disable: 4251) //disable dll export warning
@@ -39,13 +39,13 @@
 #endif
 
 #ifdef WIN32
-#	ifdef EVOLVE_UTILS_BUILD_SHARED_LIBRARY
-#  		define EVOLVE_UTILS_EXPORT __declspec(dllexport)
+#	ifdef EVOLVE_CORE_BUILD_SHARED_LIBRARY
+#  		define EVOLVE_CORE_EXPORT __declspec(dllexport)
 #	else
-#		define EVOLVE_UTILS_EXPORT __declspec(dllimport)
+#		define EVOLVE_CORE_EXPORT __declspec(dllimport)
 #	endif
 #else
-#	define EVOLVE_UTILS_EXPORT
+#	define EVOLVE_CORE_EXPORT
 #endif
 
 #endif
