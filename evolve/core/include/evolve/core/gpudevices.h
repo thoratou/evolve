@@ -73,6 +73,12 @@ namespace evolve {
 			void waitIdleGraphicsQueue() const;
 			void waitIdlePresentQueue() const;
 
+		//non-copyable
+		public:
+			GPUDevices() = delete;
+			GPUDevices(const GPUDevices&) = delete;
+			GPUDevices& operator=(const GPUDevices&) = delete;
+
 		private:
 			VkPhysicalDevice _physicalDevice;
 			VkDevice _logicalDevice;

@@ -53,6 +53,8 @@ namespace evolve {
 			_graphicsFamily(-1),
 			_presentFamily(-1){
 
+			EVOLVE_LOG_DEBUG("Retrieving GPU devices");
+
 			//retrieve physical GPU device
 			uint32_t aDeviceCount = 0;
 			vkEnumeratePhysicalDevices(_instancePtr->get(), &aDeviceCount, nullptr);
@@ -70,6 +72,8 @@ namespace evolve {
 			}
 
 			EVOLVE_CRITICAL_EXCEPTION_IF(_physicalDevice == VK_NULL_HANDLE, "failed to find a suitable GPU");
+
+			EVOLVE_LOG_DEBUG("Physical GPU device found, address: " << _physicalDevice);
 
 			//retrieve logical GPU device
 			std::vector<VkDeviceQueueCreateInfo> queueCreateInfos;
@@ -102,16 +106,23 @@ namespace evolve {
 			createInfo.ppEnabledLayerNames = _instancePtr->getValidationLayers().data();
 
 			if (vkCreateDevice(_physicalDevice, &createInfo, nullptr, &_logicalDevice) != VK_SUCCESS) {
-				throw std::runtime_error("failed to create logical device!");
+				EVOLVE_CRITICAL_EXCEPTION("failed to create logical device");
 			}
+
+			EVOLVE_LOG_DEBUG("Logical GPU device found, address: " << _logicalDevice);
 
 			vkGetDeviceQueue(_logicalDevice, _graphicsFamily, 0, &_graphicsQueue);
 			vkGetDeviceQueue(_logicalDevice, _presentFamily, 0, &_presentQueue);
+
+			EVOLVE_LOG_DEBUG("Graphics queue created, address: " << _graphicsQueue);
+			EVOLVE_LOG_DEBUG("Present queue created, address: " << _presentQueue);
+
 		}
 
 		GPUDevices::~GPUDevices() {
-
 			vkDestroyDevice(_logicalDevice, nullptr);
+
+			EVOLVE_LOG_DEBUG("GPU devices destroyed");
 		}
 
 		VkPhysicalDevice GPUDevices::getPhysicalDevice() const {
@@ -157,7 +168,7 @@ namespace evolve {
 
 			bool swapChainAdequate = false;
 			if (extensionsSupported) {
-				//to fix
+				//TODO to fix
 				//std::unique_ptr<evolve::core::SwapChain> aSwapchain(new evolve::core::SwapChain(_instancePtr, iWindow, *this);
 
 				//swapChainAdequate = !_swapchain->getFormats().empty() && !_swapchain->getPresentModes().empty();

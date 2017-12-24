@@ -48,12 +48,18 @@ namespace evolve {
 		Surface::Surface(const std::shared_ptr<evolve::core::Instance>& iInstancePtr,
 						 const evolve::core::Window& iWindow)
 			:_instancePtr(iInstancePtr) {
+
+			EVOLVE_LOG_DEBUG("Creating window surface");
+			
 			if (glfwCreateWindowSurface(_instancePtr->get(), iWindow.get(), nullptr, &_surface) != VK_SUCCESS) {
 				EVOLVE_CRITICAL_EXCEPTION("failed to create window surface");
 			}
+
+			EVOLVE_LOG_DEBUG("Window surface created");
 		}
 		Surface::~Surface() {
 			vkDestroySurfaceKHR(_instancePtr->get(), _surface, nullptr);
+			EVOLVE_LOG_DEBUG("Window surface destroyed");
 		}
 
 		VkSurfaceKHR Surface::get() const {

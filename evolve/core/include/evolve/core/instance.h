@@ -62,6 +62,13 @@ namespace evolve {
 			std::vector<const char*>& accessExtensions();
 
 			const evolve::core::ValidationLayers& getValidationLayers() const;
+
+		//non-copyable
+		public:
+			Instance() = delete;
+			Instance(const Instance&) = delete;
+			Instance& operator=(const Instance&) = delete;
+
 		private:
 			void retrieveRequiredExtensions();
 			

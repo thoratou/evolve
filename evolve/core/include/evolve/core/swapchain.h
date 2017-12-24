@@ -34,6 +34,8 @@
 #include <evolve/core/export.h>
 #include <evolve/core/instance.h>
 #include <evolve/core/gpudevices.h>
+#include <evolve/core/surface.h>
+#include <evolve/core/semaphore.h>
 
 #include <vulkan/vulkan.h>
 
@@ -67,12 +69,15 @@ namespace evolve {
 			const std::vector<VkSurfaceFormatKHR>& getFormats() const;
 			const std::vector<VkPresentModeKHR>& getPresentModes() const;
 
-			void recreateSwapchain();
+			void recreateSwapchain(const evolve::core::Window& iWindow);
 
-			void drawFrame();
+			void drawFrame(const evolve::core::Window& iWindow);
 
-			VkResult acquireNextImage(const evolve::core::Semaphore& iSemaphore, uint32_t& oImageIndex);
-
+		//non-copyable
+		public:
+			SwapChain() = delete;
+			SwapChain(const SwapChain&) = delete;
+			SwapChain& operator=(const SwapChain&) = delete;
 
 		private:
 			VkSwapchainKHR _swapChain;
@@ -96,26 +101,29 @@ namespace evolve {
 			void cleanupSwapchain();
 
 			std::vector<VkImageView> _swapChainImageViews;
-			void recreateSwapChainViews();
+			void createSwapChainViews();
 
 			VkRenderPass _renderPass;
-			void recreateRenderPass();
+			void createRenderPass();
 
 			VkPipelineLayout _pipelineLayout;
 			VkPipeline _graphicsPipeline;
-			void recreateGraphicsPipeline();
+			void createGraphicsPipeline();
 
 			std::vector<VkFramebuffer> _swapChainFramebuffers;
-			void recreateFramebuffers();
+			void createFramebuffers();
 
 			VkCommandPool _commandPool;
-			void recreateCommandPool();
+			void createCommandPool();
 
 			std::vector<VkCommandBuffer> _commandBuffers;
-			void recreateCommandBuffers();
+			void createCommandBuffers();
 
 			std::shared_ptr<evolve::core::Instance> _instancePtr;
 			std::shared_ptr<evolve::core::GPUDevices> _devices;
+
+			evolve::core::Semaphore _imageAvailableSemaphore;
+			evolve::core::Semaphore _renderFinishedSemaphore;
 		};
     }
 }

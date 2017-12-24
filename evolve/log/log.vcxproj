@@ -110,6 +110,7 @@
       <PreprocessorDefinitions>_DEBUG;WIN32;EVOLVE_LOG_BUILD_SHARED_LIBRARY;USE_EVOLVE_LOG_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
       <AdditionalIncludeDirectories>include;..\utils\include%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>

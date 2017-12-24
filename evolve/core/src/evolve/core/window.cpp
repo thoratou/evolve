@@ -44,6 +44,8 @@ namespace evolve {
 		Window::Window(int iWidth, int iHeight){
 			using namespace std::placeholders;
 
+			EVOLVE_LOG_DEBUG("Creating GLFW window");
+
 			glfwInit();
 
 			glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
@@ -53,20 +55,27 @@ namespace evolve {
 			glfwSetWindowUserPointer(_window, this);
 
 			glfwSetWindowSizeCallback(_window, &Window::_onResize);
+
+			EVOLVE_LOG_DEBUG("GLFW window created");
+
 		}
 
 		Window::~Window() {
+			destroySurface();
+
 			glfwDestroyWindow(_window);
 
 			glfwTerminate();
+
+			EVOLVE_LOG_DEBUG("GLFW window destroyed");
 		}
 
 		void Window::createSurface(const std::shared_ptr<evolve::core::Instance>& iInstancePtr) {
-			_surfacePtr = std::unique_ptr<evolve::core::Surface>(new evolve::core::Surface(iInstancePtr, *this));
+			_surfacePtr = std::shared_ptr<evolve::core::Surface>(new evolve::core::Surface(iInstancePtr, *this));
 		}
 
 		void Window::destroySurface() {
-			_surfacePtr.release();
+			_surfacePtr.reset();
 		}
 
 		const evolve::core::Surface& Window::getSurface() const {
@@ -95,6 +104,8 @@ namespace evolve {
 				EVOLVE_LOG_WARNING("trying to resize window this with or height set to 0, ignored");
 				return;
 			}
+
+			EVOLVE_LOG_INFO("Resizing window, width: " << iWidth << ", height: " << iHeight);
 
 			Window* this_ = reinterpret_cast<Window*>(glfwGetWindowUserPointer(ioWindow));
 			this_->onResize(iWidth, iHeight);

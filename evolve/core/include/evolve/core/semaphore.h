@@ -59,6 +59,12 @@ namespace evolve {
 
 			VkSemaphore getSemaphore() const;
 
+		//non-copyable
+		public:
+			Semaphore() = delete;
+			Semaphore(const Semaphore&) = delete;
+			Semaphore& operator=(const Semaphore&) = delete;
+
 		private:
 			std::shared_ptr<evolve::core::Instance> _instancePtr;
 			std::shared_ptr<evolve::core::GPUDevices> _devices;

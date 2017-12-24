@@ -71,9 +71,16 @@ namespace evolve {
 			virtual void onResize(int iWidth, int iHeight) = 0;
 
 			GLFWwindow* get() const;
+		
+		//non-copyable
+		public:
+			Window() = delete;
+			Window(const Window&) = delete;
+			Window& operator=(const Window&) = delete;
+
 		protected:
 			GLFWwindow* _window;
-			std::unique_ptr<evolve::core::Surface> _surfacePtr;
+			std::shared_ptr<evolve::core::Surface> _surfacePtr;
 		private:
 			static void _onResize(GLFWwindow* ioWindow, int iWidth, int iHeight);
 		};

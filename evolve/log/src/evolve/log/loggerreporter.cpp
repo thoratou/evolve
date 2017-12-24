@@ -67,14 +67,18 @@ namespace evolve {
 			//file and line
 			aSs.setf(std::ios::left);
 			aSs.fill(' ');
-			aSs.width(15);
-			aSs << iLogMessage._file << "#" << iLogMessage._line << " > ";
-				
+			aSs.width(42);
+			aSs << iLogMessage._file << "#";
+			aSs.setf(std::ios::right);
+			aSs.fill(' ');
+			aSs.width(4);
+			aSs << iLogMessage._line << " > ";
+
 			
 			//function
 			aSs.setf(std::ios::right);
 			aSs.fill(' ');
-			aSs.width(40);
+			aSs.width(50);
 			aSs << iLogMessage._func << " | ";
 
 			//log level

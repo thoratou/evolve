@@ -122,6 +122,7 @@
       <PreprocessorDefinitions>_DEBUG;WIN32;EVOLVE_CORE_BUILD_SHARED_LIBRARY;USE_EVOLVE_LOG_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
       <AdditionalIncludeDirectories>include;..\utils\include;..\log\include;..\..\external\glfw;C:\VulkanSDK\1.0.57.0\Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>

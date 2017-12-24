@@ -60,6 +60,12 @@ namespace evolve {
 
 			VkSurfaceKHR get() const;
 
+		//non-copyable
+		public:
+			Surface() = delete;
+			Surface(const Surface&) = delete;
+			Surface& operator=(const Surface&) = delete;
+
 		private:
 			VkSurfaceKHR _surface;
 			std::shared_ptr<evolve::core::Instance> _instancePtr;

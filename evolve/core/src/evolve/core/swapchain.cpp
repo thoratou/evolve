@@ -50,8 +50,68 @@ namespace evolve {
 		SwapChain::SwapChain(const std::shared_ptr<evolve::core::Instance>& iInstancePtr,
 							 const std::shared_ptr<evolve::core::GPUDevices>& iDevices,
 							 const evolve::core::Window& iWindow)
-			:_instancePtr(iInstancePtr),
-			_devices(iDevices){
+			:_swapChain(NULL), _renderPass(NULL), _pipelineLayout(NULL), _graphicsPipeline(NULL), _commandPool(NULL),
+			_instancePtr(iInstancePtr),
+			_devices(iDevices),
+			_imageAvailableSemaphore(iInstancePtr, iDevices),
+			_renderFinishedSemaphore(iInstancePtr, iDevices){
+
+			EVOLVE_LOG_DEBUG("Creating Vulkan swapchain");
+
+			recreateSwapchain(iWindow);
+
+			EVOLVE_LOG_DEBUG("Vulkan swapchain created");
+		}
+
+		SwapChain::~SwapChain() {
+			cleanupSwapchain();
+
+			EVOLVE_LOG_DEBUG("Vulkan swapchain destroyed");
+		}
+
+		void SwapChain::cleanupSwapchain() {
+			if (_swapChain != NULL) {
+				for (size_t i = 0; i < _swapChainFramebuffers.size(); i++) {
+					vkDestroyFramebuffer(_devices->getLogicalDevice(), _swapChainFramebuffers[i], nullptr);
+				}
+
+				vkFreeCommandBuffers(_devices->getLogicalDevice(), _commandPool, static_cast<uint32_t>(_commandBuffers.size()), _commandBuffers.data());
+
+				vkDestroyPipeline(_devices->getLogicalDevice(), _graphicsPipeline, nullptr);
+				vkDestroyPipelineLayout(_devices->getLogicalDevice(), _pipelineLayout, nullptr);
+				vkDestroyRenderPass(_devices->getLogicalDevice(), _renderPass, nullptr);
+
+				for (size_t i = 0; i < _swapChainImageViews.size(); i++) {
+					vkDestroyImageView(_devices->getLogicalDevice(), _swapChainImageViews[i], nullptr);
+				}
+
+				vkDestroyCommandPool(_devices->getLogicalDevice(), _commandPool, nullptr);
+
+				vkDestroySwapchainKHR(_devices->getLogicalDevice(), _swapChain, nullptr);
+
+				EVOLVE_LOG_DEBUG("Vulkan swapchain cleaned-up");
+			}
+		}
+
+		const VkSurfaceCapabilitiesKHR& SwapChain::getCapabilities() const {
+			return _capabilities;
+		}
+		const std::vector<VkSurfaceFormatKHR>& SwapChain::getFormats() const {
+			return _formats;
+		}
+		const std::vector<VkPresentModeKHR>& SwapChain::getPresentModes() const {
+			return _presentModes;
+		}
+
+		void SwapChain::recreateSwapchain(const evolve::core::Window& iWindow) {
+			//ensure that everything is completed before unallocation
+			_devices->waitIdleDevice();
+
+			//clean-up
+			cleanupSwapchain();
+
+			EVOLVE_LOG_DEBUG("Recreating swapchain Vulkan swapchain");
+
 			querySwapChainSupport(iWindow.getSurface(), *_devices);
 
 			VkSurfaceFormatKHR surfaceFormat = chooseSwapSurfaceFormat();
@@ -103,92 +163,44 @@ namespace evolve {
 			_swapChainExtent = extent;
 
 			//swap chain views
-			recreateSwapChainViews();
+			createSwapChainViews();
 
 			//render pass
-			recreateRenderPass();
+			createRenderPass();
 
 			//graphics pipeline
-			recreateGraphicsPipeline();
+			createGraphicsPipeline();
 
 			//framebuffers
-			recreateFramebuffers();
+			createFramebuffers();
 
 			//command pool
-			recreateCommandPool();
+			createCommandPool();
 
 			//command buffers
-			recreateCommandBuffers();
-
+			createCommandBuffers();
 		}
 
-		SwapChain::~SwapChain() {
-			cleanupSwapchain();
-
-			vkDestroyCommandPool(_devices->getLogicalDevice(), _commandPool, nullptr);
-		}
-
-		void SwapChain::cleanupSwapchain() {
-			for (size_t i = 0; i < _swapChainFramebuffers.size(); i++) {
-				vkDestroyFramebuffer(_devices->getLogicalDevice(), _swapChainFramebuffers[i], nullptr);
-			}
-
-			vkFreeCommandBuffers(_devices->getLogicalDevice(), _commandPool, static_cast<uint32_t>(_commandBuffers.size()), _commandBuffers.data());
-
-			vkDestroyPipeline(_devices->getLogicalDevice(), _graphicsPipeline, nullptr);
-			vkDestroyPipelineLayout(_devices->getLogicalDevice(), _pipelineLayout, nullptr);
-			vkDestroyRenderPass(_devices->getLogicalDevice(), _renderPass, nullptr);
-
-			for (size_t i = 0; i < _swapChainImageViews.size(); i++) {
-				vkDestroyImageView(_devices->getLogicalDevice(), _swapChainImageViews[i], nullptr);
-			}
-
-			vkDestroySwapchainKHR(_devices->getLogicalDevice(), _swapChain, nullptr);
-		}
-
-		const VkSurfaceCapabilitiesKHR& SwapChain::getCapabilities() const {
-			return _capabilities;
-		}
-		const std::vector<VkSurfaceFormatKHR>& SwapChain::getFormats() const {
-			return _formats;
-		}
-		const std::vector<VkPresentModeKHR>& SwapChain::getPresentModes() const {
-			return _presentModes;
-		}
-
-		void SwapChain::recreateSwapchain() {
-			//clean-up
-			cleanupSwapchain();
-
-			//swap chain views
-			recreateSwapChainViews();
-
-			//render pass
-			recreateRenderPass();
-
-			//graphics pipeline
-			recreateGraphicsPipeline();
-
-			//framebuffers
-			recreateFramebuffers();
-
-			//command pool
-			recreateCommandPool();
-
-			//command buffers
-			recreateCommandBuffers();
-		}
-
-		void SwapChain::drawFrame() {
+		void SwapChain::drawFrame(const evolve::core::Window& iWindow) {
 			uint32_t aImageIndex;
-			evolve::core::Semaphore aImageAvailableSemaphore(_instancePtr, _devices);
 
-			acquireNextImage(aImageAvailableSemaphore, aImageIndex);
+#undef max
+			VkResult result = vkAcquireNextImageKHR(_devices->getLogicalDevice(), _swapChain, std::numeric_limits<uint64_t>::max(), _imageAvailableSemaphore.getSemaphore(), VK_NULL_HANDLE, &aImageIndex);
+
+			if (result == VK_ERROR_OUT_OF_DATE_KHR) {
+				EVOLVE_LOG_INFO("Out of date swapchain, recreating it");
+
+				recreateSwapchain(iWindow);
+				return;
+			}
+			else if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR) {
+				EVOLVE_CRITICAL_EXCEPTION("failed to acquire swap chain image!");
+			}
 
 			VkSubmitInfo submitInfo = {};
 			submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
 
-			VkSemaphore waitSemaphores[] = { aImageAvailableSemaphore.getSemaphore() };
+			VkSemaphore waitSemaphores[] = { _imageAvailableSemaphore.getSemaphore() };
 			VkPipelineStageFlags waitStages[] = { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
 			submitInfo.waitSemaphoreCount = 1;
 			submitInfo.pWaitSemaphores = waitSemaphores;
@@ -197,13 +209,12 @@ namespace evolve {
 			submitInfo.commandBufferCount = 1;
 			submitInfo.pCommandBuffers = &_commandBuffers[aImageIndex];
 
-			evolve::core::Semaphore aRenderFinishedSemaphore(_instancePtr, _devices);
-			VkSemaphore signalSemaphores[] = { aRenderFinishedSemaphore.getSemaphore() };
+			VkSemaphore signalSemaphores[] = { _renderFinishedSemaphore.getSemaphore() };
 			submitInfo.signalSemaphoreCount = 1;
 			submitInfo.pSignalSemaphores = signalSemaphores;
 
 			if (vkQueueSubmit(_devices->getGraphicsQueue(), 1, &submitInfo, VK_NULL_HANDLE) != VK_SUCCESS) {
-				throw std::runtime_error("failed to submit draw command buffer!");
+				EVOLVE_CRITICAL_EXCEPTION("failed to submit draw command buffer");
 			}
 
 			VkPresentInfoKHR presentInfo = {};
@@ -218,34 +229,18 @@ namespace evolve {
 
 			presentInfo.pImageIndices = &aImageIndex;
 
-			VkResult result = vkQueuePresentKHR(_devices->getPresentQueue(), &presentInfo);
+			result = vkQueuePresentKHR(_devices->getPresentQueue(), &presentInfo);
 
 			if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR) {
-				recreateSwapchain();
+				recreateSwapchain(iWindow);
+				return;
 			}
 			else if (result != VK_SUCCESS) {
-				throw std::runtime_error("failed to present swap chain image!");
+				EVOLVE_CRITICAL_EXCEPTION("failed to present swap chain image");
 			}
 
 			_devices->waitIdlePresentQueue();
 		}
-
-
-		VkResult SwapChain::acquireNextImage(const evolve::core::Semaphore& iSemaphore, uint32_t& oImageIndex) {
-#undef max
-			VkResult result = vkAcquireNextImageKHR(_devices->getLogicalDevice(), _swapChain, std::numeric_limits<uint64_t>::max(), iSemaphore.getSemaphore(), VK_NULL_HANDLE, &oImageIndex);
-
-			if (result == VK_ERROR_OUT_OF_DATE_KHR) {
-				recreateSwapchain();
-				result = acquireNextImage(iSemaphore, oImageIndex);
-			}
-			else if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR) {
-				EVOLVE_CRITICAL_EXCEPTION("failed to acquire swap chain image!");
-			}
-
-			return result;
-		}
-
 
 		void SwapChain::querySwapChainSupport(const evolve::core::Surface& iSurface,
 											  const evolve::core::GPUDevices& iDevices) {
@@ -320,7 +315,7 @@ namespace evolve {
 			}
 		}
 
-		void SwapChain::recreateSwapChainViews() {
+		void SwapChain::createSwapChainViews() {
 			_swapChainImageViews.resize(_swapChainImages.size());
 
 			for (size_t i = 0; i < _swapChainImages.size(); i++) {
@@ -345,7 +340,7 @@ namespace evolve {
 			}
 		}
 
-		void SwapChain::recreateRenderPass() {
+		void SwapChain::createRenderPass() {
 			VkAttachmentDescription aColorAttachment = {};
 			aColorAttachment.format = _swapChainImageFormat;
 			aColorAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
@@ -421,7 +416,7 @@ namespace evolve {
 			return buffer;
 		}
 
-		void SwapChain::recreateGraphicsPipeline() {
+		void SwapChain::createGraphicsPipeline() {
 			auto aVertShaderCode = readFile("../shaders/vert.spv");
 			auto aFragShaderCode = readFile("../shaders/frag.spv");
 
@@ -534,7 +529,7 @@ namespace evolve {
 
 		}
 
-		void SwapChain::recreateFramebuffers() {
+		void SwapChain::createFramebuffers() {
 			_swapChainFramebuffers.resize(_swapChainImageViews.size());
 
 			for (size_t i = 0; i < _swapChainImageViews.size(); i++) {
@@ -558,7 +553,7 @@ namespace evolve {
 
 		}
 
-		void SwapChain::recreateCommandPool() {
+		void SwapChain::createCommandPool() {
 			VkCommandPoolCreateInfo poolInfo = {};
 			poolInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
 			poolInfo.queueFamilyIndex = _devices->getGraphicsFamily();
@@ -568,7 +563,7 @@ namespace evolve {
 			}
 		}
 
-		void SwapChain::recreateCommandBuffers() {
+		void SwapChain::createCommandBuffers() {
 			_commandBuffers.resize(_swapChainFramebuffers.size());
 
 			VkCommandBufferAllocateInfo aAllocInfo = {};

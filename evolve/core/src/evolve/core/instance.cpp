@@ -47,6 +47,8 @@ namespace evolve {
 			const std::shared_ptr<evolve::core::ValidationLayers>& ioValidationLayers)
 				:_applicationName(iApplicationName), _validationLayers(ioValidationLayers) {
 
+			EVOLVE_LOG_DEBUG("Creating Vulkan global instance");
+
 			VkApplicationInfo aApplicationInfo = {};
 			aApplicationInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
 			aApplicationInfo.pApplicationName = _applicationName.c_str();
@@ -70,6 +72,8 @@ namespace evolve {
 				EVOLVE_CRITICAL_EXCEPTION("failed to create Vulkan instance");
 			}
 
+			EVOLVE_LOG_DEBUG("Vulkan instance created, address: " << _instance);
+
 			_validationLayers->setupDebugCall(*this);
 		}
 
@@ -77,6 +81,8 @@ namespace evolve {
 		Instance::~Instance() {
 			_validationLayers->destroyDebugCall(*this);
 			vkDestroyInstance(_instance, nullptr);
+
+			EVOLVE_LOG_DEBUG("Vulkan instance destroyed");
 		}
 
 		const VkInstance& Instance::get() const {
@@ -97,12 +103,15 @@ namespace evolve {
 
 		void Instance::retrieveRequiredExtensions() {
 
+			EVOLVE_LOG_DEBUG("Retrieving instance extensions");
+
 			unsigned int aGlfwExtensionCount = 0;
 			const char** aGlfwExtensions;
 			aGlfwExtensions = glfwGetRequiredInstanceExtensions(&aGlfwExtensionCount);
 
 			for (unsigned int i = 0; i < aGlfwExtensionCount; i++) {
 				_extensions.push_back(aGlfwExtensions[i]);
+				EVOLVE_LOG_DEBUG("Extension found: " << aGlfwExtensions[i]);
 			}
 
 			_validationLayers->updateExtensions(*this);

@@ -45,17 +45,22 @@ namespace evolve {
 			_devices(iDevices),
 			_semaphore(VK_NULL_HANDLE){
 
+			EVOLVE_LOG_DEBUG("Creating Vulkan semaphore");
+
 			VkSemaphoreCreateInfo semaphoreInfo = {};
 			semaphoreInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
 
 			if (vkCreateSemaphore(_devices->getLogicalDevice(), &semaphoreInfo, nullptr, &_semaphore) != VK_SUCCESS) {
 				EVOLVE_CRITICAL_EXCEPTION("failed to create semaphore");
 			}
+
+			EVOLVE_LOG_DEBUG("Vulkan semaphore created");
 		}
 
 		Semaphore::~Semaphore() {
-
 			vkDestroySemaphore(_devices->getLogicalDevice(), _semaphore, nullptr);
+
+			EVOLVE_LOG_DEBUG("Vulkan semaphore destroyed");
 		}
 
 		VkSemaphore Semaphore::getSemaphore() const {

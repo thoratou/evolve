@@ -62,6 +62,12 @@ namespace evolve {
 			void updateExtensions(evolve::core::Instance& iInstance);
 			void setupDebugCall(const evolve::core::Instance& iInstance);
 			void destroyDebugCall(const evolve::core::Instance& iInstance);
+
+		//non-copyable
+		public:
+			ValidationLayers(const ValidationLayers&) = delete;
+			ValidationLayers& operator=(const ValidationLayers&) = delete;
+
 		private:
 			VkDebugReportCallbackEXT _callback;
 
